@@ -306,7 +306,7 @@ tbody td.wrap{white-space:normal;max-width:200px}
             <option value="packed">Упаковано</option>
             <option value="not-packed">Не упаковано</option>
           </select>
-          <input type="text" placeholder="Поиск по поставке / сотруднику..." id="filterText" style="width:260px">
+          <input type="text" placeholder="Поиск по поставке / employee_id..." id="filterText" style="width:260px">
         </div>
       </div>
       <div class="table-wrap">
@@ -315,7 +315,7 @@ tbody td.wrap{white-space:normal;max-width:200px}
             <tr>
               <th onclick="sortTable('date')">Дата <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('delivery')">Поставка <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('employee')">Сотрудник <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('employee')">Employee_id <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('qty')">Кол-во <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('status')">Статус <span class="sort-icon">↕</span></th>
               <th>Фото</th>
@@ -349,7 +349,7 @@ tbody td.wrap{white-space:normal;max-width:200px}
               <tr>
                 <th>Дата</th>
                 <th>Поставка</th>
-                <th>Сотрудник</th>
+                <th>Employee_id</th>
                 <th>Кол-во</th>
                 <th>Статус</th>
                 <th>Фото</th>
@@ -377,9 +377,9 @@ const WAREHOUSES = [
   'Склад Самара','Склад Ростов-на-Дону','Склад Нижний Новгород'
 ];
 const EMPLOYEES = [
-  'Иванов А.С.','Петров В.Н.','Сидорова Е.А.','Козлов Д.М.',
-  'Новикова О.П.','Фёдоров И.К.','Морозова Т.В.','Волков Р.Л.',
-  'Алексеева М.Ю.','Лебедев С.Г.','Кузнецов П.А.','Соколова Н.И.'
+  '100201','100302','100415','100508',
+  '100623','100714','100839','100947',
+  '101052','101163','101274','101389'
 ];
 const SUPPLIERS = [
   'ООО "ТехноПоставка"','ИП Сергеев','ООО "СтройМатериал"',
