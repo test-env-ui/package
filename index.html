@@ -153,6 +153,8 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:hover{background:#f8f6ff}
 tbody td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 tbody td.wrap{white-space:normal;max-width:200px}
+td.right,th.right{text-align:right}
+tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 .status-badge{
   display:inline-block;padding:3px 10px;border-radius:999px;
   font-size:.75rem;font-weight:600;
@@ -267,6 +269,7 @@ tbody td.wrap{white-space:normal;max-width:200px}
 <div class="tabs-bar">
   <button class="tab-btn active" data-tab="chart" onclick="switchTab('chart',this)">График</button>
   <button class="tab-btn" data-tab="search" onclick="switchTab('search',this)">Поиск по поступлению</button>
+  <button class="tab-btn" data-tab="warehouse" onclick="switchTab('warehouse',this)">Сводная по складам</button>
 </div>
 
 <!-- Content -->
@@ -358,6 +361,36 @@ tbody td.wrap{white-space:normal;max-width:200px}
             <tbody id="searchBody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Warehouse summary -->
+  <div class="tab-pane" id="tab-warehouse">
+    <div class="detail-section">
+      <div class="detail-header">
+        <h3>Сводная по складам</h3>
+        <div class="detail-filter-row">
+          <span style="font-size:.85rem;color:var(--muted)" id="whSummaryPeriod"></span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="whSummaryTable">
+          <thead>
+            <tr>
+              <th>Склад</th>
+              <th>Всего принято на столах</th>
+              <th>Кол-во упакованного на приемке</th>
+              <th>% упакованного на приемке от общего</th>
+              <th>Кол-во принятого для проверки регламента</th>
+              <th>% принятого для проверки регламента от общего</th>
+              <th>Кол-во неправильной упаковки от поставщика</th>
+              <th>% неправильной упаковки от всего принятого</th>
+            </tr>
+          </thead>
+          <tbody id="whSummaryBody"></tbody>
+          <tfoot id="whSummaryFoot"></tfoot>
+        </table>
       </div>
     </div>
   </div>
@@ -502,6 +535,7 @@ function loadData() {
   updateKPIs();
   updateChart();
   applyDetailFilters();
+  buildWarehouseSummary();
 }
 
 /* ─── KPIs ─── */
@@ -770,6 +804,86 @@ function closePhoto() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closePhoto();
 });
+
+/* ─── Warehouse summary table ─── */
+const WH_SUMMARY_NAMES = [
+  'WH Turkey','tbilisi 2','Абакан Складская','Актобе','Алексин',
+  'Алматы Атакент','Архангельск Ленина','Астана','Барнаул','Белая Дача',
+  'Бишкек','Брянск','Великий Новгород','Владивосток','Волгоград',
+  'Вологда','Воронеж','Екатеринбург','Иваново','Ижевск',
+  'Иркутск','Казань','Калининград','Калуга','Кемерово',
+  'Киров','Коледино','Краснодар','Красноярск','Курск'
+];
+
+function fmtCompact(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 2).replace(/\.?0+$/, '') + 'k';
+  return n.toString();
+}
+
+function buildWarehouseSummary() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  document.getElementById('whSummaryPeriod').textContent = `Дата: ${from} — ${to}`;
+
+  const rows = WH_SUMMARY_NAMES.map(name => {
+    const seed = Math.abs([...name].reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0));
+    const r = (min, max) => Math.floor((seed * 9301 + 49297) % 233280 / 233280 * (max - min + 1)) + min;
+    const totalReceived = r(100, 1500000);
+    const packedRate = (seed % 60) / 100;
+    const packed = Math.round(totalReceived * packedRate);
+    const checkRate = (seed % 30) / 100;
+    const checkQty = Math.round(totalReceived * checkRate);
+    const wrongRate = (seed % 10) / 100;
+    const wrongQty = Math.round(totalReceived * wrongRate);
+
+    return {
+      name,
+      totalReceived,
+      packed,
+      packedPct: totalReceived > 0 ? (packed / totalReceived * 100) : 0,
+      checkQty,
+      checkPct: totalReceived > 0 ? (checkQty / totalReceived * 100) : 0,
+      wrongQty,
+      wrongPct: totalReceived > 0 ? (wrongQty / totalReceived * 100) : 0,
+    };
+  });
+
+  const totals = rows.reduce((t, r) => ({
+    totalReceived: t.totalReceived + r.totalReceived,
+    packed: t.packed + r.packed,
+    checkQty: t.checkQty + r.checkQty,
+    wrongQty: t.wrongQty + r.wrongQty,
+  }), { totalReceived: 0, packed: 0, checkQty: 0, wrongQty: 0 });
+
+  const tbody = document.getElementById('whSummaryBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td class="right">${fmtCompact(r.totalReceived)}</td>
+      <td class="right">${r.packed ? fmtCompact(r.packed) : ''}</td>
+      <td class="right">${r.packedPct ? r.packedPct.toFixed(2) : ''}</td>
+      <td class="right">${r.checkQty ? fmtCompact(r.checkQty) : ''}</td>
+      <td class="right">${r.checkPct ? r.checkPct.toFixed(2) : ''}</td>
+      <td class="right">${r.wrongQty ? fmtCompact(r.wrongQty) : ''}</td>
+      <td class="right">${r.wrongPct ? r.wrongPct.toFixed(2) : ''}</td>
+    </tr>
+  `).join('');
+
+  const tfoot = document.getElementById('whSummaryFoot');
+  tfoot.innerHTML = `
+    <tr style="font-weight:700;border-top:2px solid var(--border);background:#fafafa">
+      <td><strong>Total (Sum)</strong></td>
+      <td class="right">${fmtCompact(totals.totalReceived)}</td>
+      <td class="right">${fmtCompact(totals.packed)}</td>
+      <td class="right">${(totals.packed / totals.totalReceived * 100).toFixed(2)}</td>
+      <td class="right">${fmtCompact(totals.checkQty)}</td>
+      <td class="right">${(totals.checkQty / totals.totalReceived * 100).toFixed(2)}</td>
+      <td class="right">${fmtCompact(totals.wrongQty)}</td>
+      <td class="right">${(totals.wrongQty / totals.totalReceived * 100).toFixed(2)}</td>
+    </tr>
+  `;
+}
 
 /* ─── Init ─── */
 initWarehouses();
