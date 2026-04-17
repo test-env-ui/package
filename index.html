@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Проверка упаковки</title>
+<title>Дашборд упаковки на приёмке</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -48,44 +48,55 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:v
 .btn-load:hover{opacity:.88}
 .btn-load svg{width:16px;height:16px}
 
-/* ── Warehouse dropdown ── */
-.wh-selector{position:relative}
-.wh-toggle{
+/* ── Multi-select dropdown (shared style for warehouse & block) ── */
+.ms-selector{position:relative}
+.ms-toggle{
   border:1.5px solid var(--border);border-radius:var(--radius-sm);
   padding:8px 36px 8px 14px;font-size:.9rem;background:#fff;color:var(--text);
   cursor:pointer;min-width:200px;position:relative;user-select:none;
 }
-.wh-toggle::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
-.wh-dropdown{
+.ms-toggle::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.ms-dropdown{
   display:none;position:absolute;top:calc(100% + 4px);left:0;
   background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);
-  box-shadow:var(--shadow);width:320px;z-index:100;padding:12px;
+  box-shadow:var(--shadow);width:280px;z-index:100;padding:12px;
 }
-.wh-dropdown.open{display:block}
-.wh-search{
+.ms-dropdown.open{display:block}
+.ms-search{
   width:100%;border:1px solid var(--border);border-radius:8px;
   padding:8px 12px;font-size:.85rem;margin-bottom:8px;outline:none;
 }
-.wh-search:focus{border-color:var(--purple-2)}
-.wh-list{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
-.wh-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.85rem}
-.wh-item:hover{background:#f3f0ff}
-.wh-item input{accent-color:var(--purple-2)}
-.wh-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.wh-actions button{
+.ms-search:focus{border-color:var(--purple-2)}
+.ms-list{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.85rem}
+.ms-item:hover{background:#f3f0ff}
+.ms-item input{accent-color:var(--purple-2)}
+.ms-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.ms-actions button{
   flex:1;padding:7px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;
 }
-.wh-btn-all{background:#f3f0ff;color:var(--purple-1)}
-.wh-btn-apply{background:var(--purple-2);color:#fff}
+.ms-btn-all{background:#f3f0ff;color:var(--purple-1)}
+.ms-btn-apply{background:var(--purple-2);color:#fff}
+
+/* ── Qty toggle ── */
+.qty-toggle-group{display:flex;flex-direction:column;gap:4px}
+.qty-toggle{display:flex;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.qty-toggle button{
+  padding:8px 16px;font-size:.85rem;font-weight:600;cursor:pointer;
+  border:none;background:#fff;color:var(--muted);transition:all .15s;
+}
+.qty-toggle button.active{background:var(--purple-1);color:#fff}
+.qty-toggle button:not(.active):hover{background:#f3f0ff;color:var(--purple-1)}
 
 /* ── Tabs ── */
 .tabs-bar{
   display:flex;gap:0;border-bottom:2px solid var(--border);
-  padding:0 32px;background:var(--card);
+  padding:0 32px;background:var(--card);overflow-x:auto;
 }
 .tab-btn{
-  padding:14px 24px;font-size:.95rem;font-weight:600;color:var(--muted);
+  padding:14px 20px;font-size:.9rem;font-weight:600;color:var(--muted);
   background:none;border:none;cursor:pointer;position:relative;transition:color .2s;
+  white-space:nowrap;
 }
 .tab-btn.active{color:var(--purple-1)}
 .tab-btn.active::after{
@@ -109,7 +120,7 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:v
 .kpi-card .kpi-value{font-size:2rem;font-weight:700}
 .kpi-card.purple .kpi-value{color:var(--purple-1)}
 .kpi-card.green .kpi-value{color:#16a34a}
-.kpi-card.red .kpi-value{color:#dc2626}
+.kpi-card.blue .kpi-value{color:#2563eb}
 
 /* ── Chart ── */
 .chart-card{
@@ -126,10 +137,10 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:v
 }
 .detail-header{
   padding:18px 24px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
 }
 .detail-header h3{font-size:1rem;font-weight:700}
-.detail-filter-row{display:flex;gap:10px;align-items:center}
+.detail-filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .detail-filter-row select,
 .detail-filter-row input{
   border:1.5px solid var(--border);border-radius:8px;
@@ -143,14 +154,17 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:v
 table{width:100%;border-collapse:collapse}
 thead th{
   padding:12px 16px;text-align:left;font-size:.78rem;
-  color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;
-  border-bottom:2px solid var(--border);background:#fafafa;
+  color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+  border-bottom:2px solid var(--border);
+  background:linear-gradient(135deg,var(--purple-1),var(--purple-2));
   position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none;
 }
-thead th:hover{color:var(--purple-1)}
+thead th:hover{opacity:.9}
 thead th .sort-icon{margin-left:4px;font-size:.7rem}
 tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:hover{background:#f8f6ff}
+tbody tr.row-error{background:#fff5f5}
+tbody tr.row-error:hover{background:#fee2e2}
 tbody td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 tbody td.wrap{white-space:normal;max-width:200px}
 td.right,th.right{text-align:right}
@@ -159,9 +173,9 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
   display:inline-block;padding:3px 10px;border-radius:999px;
   font-size:.75rem;font-weight:600;
 }
-.status-badge.request{background:#ede9fe;color:#6d28d9}
 .status-badge.packed{background:#dcfce7;color:#15803d}
 .status-badge.not-packed{background:#fee2e2;color:#b91c1c}
+.status-badge.in-progress{background:#dbeafe;color:#1d4ed8}
 
 /* ── Photo ── */
 .photo-thumb{
@@ -170,6 +184,7 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 }
 .photo-thumb:hover{transform:scale(1.1)}
 .no-photo{color:var(--muted);font-size:.8rem;font-style:italic}
+.photo-cell-link{cursor:pointer;color:var(--purple-1);text-decoration:underline;font-size:.82rem}
 
 /* ── Photo modal ── */
 .photo-modal{
@@ -234,23 +249,40 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 
 <!-- Header -->
 <div class="topbar">
-  <h1>Проверка упаковки</h1>
+  <h1>Дашборд упаковки на приёмке</h1>
 </div>
 
 <!-- Filters -->
 <div class="filters-bar">
-  <div class="filter-group wh-selector">
+
+  <!-- Склад -->
+  <div class="filter-group ms-selector" id="whSelector">
     <span class="filter-label">Склад</span>
-    <div class="wh-toggle" id="whToggle">Выбраны все</div>
-    <div class="wh-dropdown" id="whDropdown">
-      <input class="wh-search" placeholder="Поиск склада..." id="whSearch">
-      <div class="wh-list" id="whList"></div>
-      <div class="wh-actions">
-        <button class="wh-btn-all" onclick="whSelectAll()">Выбрать все</button>
-        <button class="wh-btn-apply" onclick="whApply()">Применить</button>
+    <div class="ms-toggle" id="whToggle">Выбраны все</div>
+    <div class="ms-dropdown" id="whDropdown">
+      <input class="ms-search" placeholder="Поиск склада..." id="whSearch">
+      <div class="ms-list" id="whList"></div>
+      <div class="ms-actions">
+        <button class="ms-btn-all" onclick="msSelectAll('whList','whDropdown')">Выбрать все</button>
+        <button class="ms-btn-apply" onclick="whApply()">Применить</button>
       </div>
     </div>
   </div>
+
+  <!-- Блок -->
+  <div class="filter-group ms-selector" id="blockSelector">
+    <span class="filter-label">Блок</span>
+    <div class="ms-toggle" id="blockToggle">Выбраны все</div>
+    <div class="ms-dropdown" id="blockDropdown">
+      <div class="ms-list" id="blockList"></div>
+      <div class="ms-actions">
+        <button class="ms-btn-all" onclick="msSelectAll('blockList','blockDropdown')">Выбрать все</button>
+        <button class="ms-btn-apply" onclick="blockApply()">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Период -->
   <div class="filter-group">
     <span class="filter-label">Период</span>
     <div style="display:flex;gap:8px;align-items:center">
@@ -259,7 +291,17 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
       <input type="date" class="filter-input" id="dateTo" value="2026-03-04">
     </div>
   </div>
-  <button class="btn-load" onclick="loadData()">
+
+  <!-- Кол-во toggle -->
+  <div class="qty-toggle-group">
+    <span class="filter-label">Кол-во</span>
+    <div class="qty-toggle">
+      <button id="btnPcs" class="active" onclick="setQtyMode('pcs')">В штуках</button>
+      <button id="btnPct" onclick="setQtyMode('pct')">В процентах</button>
+    </div>
+  </div>
+
+  <button class="btn-load" onclick="loadData()" style="align-self:flex-end">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
     Обновить
   </button>
@@ -268,83 +310,147 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 <!-- Tabs -->
 <div class="tabs-bar">
   <button class="tab-btn active" data-tab="chart" onclick="switchTab('chart',this)">График</button>
+  <button class="tab-btn" data-tab="seller" onclick="switchTab('seller',this)">Упаковка по продавцу</button>
+  <button class="tab-btn" data-tab="subject" onclick="switchTab('subject',this)">Упаковка по предмету</button>
+  <button class="tab-btn" data-tab="regulation" onclick="switchTab('regulation',this)">Проверка по регламенту</button>
   <button class="tab-btn" data-tab="search" onclick="switchTab('search',this)">Поиск по поступлению</button>
-  <button class="tab-btn" data-tab="warehouse" onclick="switchTab('warehouse',this)">Сводная по складам</button>
 </div>
 
 <!-- Content -->
 <div class="content">
 
-  <!-- Tab 1: Chart -->
+  <!-- Tab 1: График -->
   <div class="tab-pane active" id="tab-chart">
     <div class="kpi-row">
       <div class="kpi-card purple">
-        <span class="kpi-label">Запросы на проверку</span>
-        <span class="kpi-value" id="kpiRequests">0</span>
+        <span class="kpi-label">Принято всего</span>
+        <span class="kpi-value" id="kpiTotal">0</span>
       </div>
-      <div class="kpi-card green">
-        <span class="kpi-label">Упаковано от поставщика</span>
+      <div class="kpi-card blue">
+        <span class="kpi-label">Упаковано всего</span>
         <span class="kpi-value" id="kpiPacked">0</span>
       </div>
-      <div class="kpi-card red">
-        <span class="kpi-label">Не упаковано от поставщика</span>
-        <span class="kpi-value" id="kpiNotPacked">0</span>
+      <div class="kpi-card green">
+        <span class="kpi-label">% корректной упаковки</span>
+        <span class="kpi-value" id="kpiCorrectPct">0%</span>
       </div>
     </div>
 
     <div class="chart-card">
-      <h3>Динамика проверки упаковки</h3>
+      <h3>Динамика упаковки на приёмке</h3>
       <div class="chart-wrap">
         <canvas id="mainChart"></canvas>
       </div>
     </div>
+  </div>
 
+  <!-- Tab 2: Упаковка по продавцу -->
+  <div class="tab-pane" id="tab-seller">
     <div class="detail-section">
       <div class="detail-header">
-        <h3>Детализация</h3>
+        <h3>Упаковка по продавцу</h3>
         <div class="detail-filter-row">
-          <select id="filterStatus">
-            <option value="">Все статусы</option>
-            <option value="request">Запрос на проверку</option>
-            <option value="packed">Упаковано</option>
-            <option value="not-packed">Не упаковано</option>
-          </select>
-          <input type="text" placeholder="Поиск по поставке / employee_id..." id="filterText" style="width:260px">
+          <input type="text" placeholder="Поиск по поставке / продавцу..." id="filterSellerText" style="width:280px">
         </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th onclick="sortTable('date')">Дата <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('delivery')">Поставка <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('employee')">Employee_id <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('qty')">Кол-во <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('status')">Статус <span class="sort-icon">↕</span></th>
-              <th>Фото</th>
+              <th onclick="sortTab2('date')">Дата <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab2('deliveryId')">Поставка <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab2('supplier')">Продавец <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab2('employeeId')">ID сотрудника <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab2('table')">Стол <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab2('type')">Тип <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab2('totalReceived')">Кол-во принятого <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab2('packedBySeller')">Кол-во упакованного <span class="sort-icon">↕</span></th>
+              <th>Статус</th>
             </tr>
           </thead>
-          <tbody id="detailBody"></tbody>
+          <tbody id="sellerBody"></tbody>
         </table>
       </div>
-      <div class="pagination" id="detailPagination"></div>
+      <div class="pagination" id="sellerPagination"></div>
     </div>
   </div>
 
-  <!-- Tab 2: Search -->
+  <!-- Tab 3: Упаковка по предмету -->
+  <div class="tab-pane" id="tab-subject">
+    <div class="detail-section">
+      <div class="detail-header">
+        <h3>Упаковка по предмету</h3>
+        <div class="detail-filter-row">
+          <input type="text" placeholder="Поиск по поставке / предмету..." id="filterSubjectText" style="width:280px">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTab3('date')">Дата <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab3('deliveryId')">Поставка <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab3('subject')">Предмет <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab3('employeeId')">ID сотрудника <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab3('table')">Стол <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab3('type')">Тип <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab3('totalReceived')">Кол-во принятого <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab3('packedBySubject')">Кол-во упакованного <span class="sort-icon">↕</span></th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody id="subjectBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="subjectPagination"></div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Проверка по регламенту -->
+  <div class="tab-pane" id="tab-regulation">
+    <div class="detail-section">
+      <div class="detail-header">
+        <h3>Проверка по регламенту</h3>
+        <div class="detail-filter-row">
+          <input type="text" placeholder="Поиск по поставке / сотруднику..." id="filterRegText" style="width:280px">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTab4('date')">Дата <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab4('deliveryId')">Поставка <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab4('employeeId')">ID сотрудника <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab4('table')">Стол <span class="sort-icon">↕</span></th>
+              <th onclick="sortTab4('type')">Тип <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab4('totalReceived')">Кол-во принятого <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab4('checkedByRegulation')">Проверено по регламенту <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab4('packedSellerCorrect')">Упаковано верно <span class="sort-icon">↕</span></th>
+              <th class="right" onclick="sortTab4('packedSellerIncorrect')">Упаковано неверно <span class="sort-icon">↕</span></th>
+              <th>Фото</th>
+            </tr>
+          </thead>
+          <tbody id="regulationBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="regulationPagination"></div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Поиск по поступлению -->
   <div class="tab-pane" id="tab-search">
     <div class="search-box">
-      <input type="text" class="search-input" id="searchInput" placeholder="Номер поступления*">
+      <input type="text" class="search-input" id="searchInput" placeholder="Номер поступления (например ПСТ-123456)">
       <button class="btn-search" onclick="doSearch()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Искать
       </button>
     </div>
-
     <div id="searchResults">
-      <div class="detail-section" id="searchTable">
+      <div class="detail-section">
         <div class="detail-header">
-          <h3 id="searchResultTitle">Результаты поиска</h3>
+          <h3 id="searchResultTitle">Введите номер поступления для поиска</h3>
         </div>
         <div class="table-wrap">
           <table>
@@ -352,9 +458,17 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
               <tr>
                 <th>Дата</th>
                 <th>Поставка</th>
-                <th>Employee_id</th>
-                <th>Кол-во</th>
-                <th>Статус</th>
+                <th>Продавец</th>
+                <th>Предмет</th>
+                <th>ID сотрудника</th>
+                <th>Стол</th>
+                <th>Тип</th>
+                <th class="right">Кол-во принятого</th>
+                <th class="right">Упак. по продавцу</th>
+                <th class="right">Упак. по предмету</th>
+                <th class="right">Проверено</th>
+                <th class="right">Верно</th>
+                <th class="right">Неверно</th>
                 <th>Фото</th>
               </tr>
             </thead>
@@ -365,35 +479,6 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
     </div>
   </div>
 
-  <!-- Tab 3: Warehouse summary -->
-  <div class="tab-pane" id="tab-warehouse">
-    <div class="detail-section">
-      <div class="detail-header">
-        <h3>Сводная по складам</h3>
-        <div class="detail-filter-row">
-          <span style="font-size:.85rem;color:var(--muted)" id="whSummaryPeriod"></span>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table id="whSummaryTable">
-          <thead>
-            <tr>
-              <th>Склад</th>
-              <th>Всего принято на столах</th>
-              <th>Кол-во упакованного на приемке</th>
-              <th>% упакованного на приемке от общего</th>
-              <th>Кол-во принятого для проверки регламента</th>
-              <th>% принятого для проверки регламента от общего</th>
-              <th>Кол-во неправильной упаковки от поставщика</th>
-              <th>% неправильной упаковки от всего принятого</th>
-            </tr>
-          </thead>
-          <tbody id="whSummaryBody"></tbody>
-          <tfoot id="whSummaryFoot"></tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Photo modal -->
@@ -403,23 +488,25 @@ tfoot td{padding:11px 16px;font-size:.88rem;white-space:nowrap}
 </div>
 
 <script>
-/* ─── State ─── */
+/* ─── Constants ─── */
 const WAREHOUSES = [
   'Склад Москва-1','Склад Москва-2','Склад СПб','Склад Казань',
   'Склад Новосибирск','Склад Екатеринбург','Склад Краснодар',
   'Склад Самара','Склад Ростов-на-Дону','Склад Нижний Новгород'
 ];
+const BLOCKS = ['Блок A','Блок B','Блок C','Блок D'];
 const EMPLOYEES = [
   '100201','100302','100415','100508',
   '100623','100714','100839','100947',
   '101052','101163','101274','101389'
 ];
 const SUPPLIERS = [
-  'ООО "ТехноПоставка"','ИП Сергеев','ООО "СтройМатериал"',
+  'ООО "ТехноПоставка"','ИП Сидоров','АО "ПромСнаб"',
+  'ИП Сергеев','ООО "СтройМатериал"',
   'ЗАО "Комплект-Сервис"','ООО "Альфа-Логистика"','ИП Козлова',
   'ООО "ГлобалТрейд"','ООО "РусПоставка"'
 ];
-// Placeholder photos for demo
+const SUBJECTS = ['Косметика','Электроника','Одежда','Бытовая химия','Продукты'];
 const PHOTOS = [
   'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=400&fit=crop',
   'https://images.unsplash.com/photo-1580901368919-7738efb0f228?w=400&h=400&fit=crop',
@@ -429,13 +516,16 @@ const PHOTOS = [
   'https://images.unsplash.com/photo-1616401784845-180882c6e3f2?w=400&h=400&fit=crop',
 ];
 
+/* ─── State ─── */
 let state = {
   warehouses: new Set(WAREHOUSES),
+  blocks: new Set(BLOCKS),
+  qtyMode: 'pcs', // 'pcs' | 'pct'
   data: [],
-  filtered: [],
-  sortKey: 'date',
-  sortDir: -1,
-  page: 1,
+  // per-tab filtered + sort
+  tab2: { filtered: [], sortKey: 'date', sortDir: -1, page: 1 },
+  tab3: { filtered: [], sortKey: 'date', sortDir: -1, page: 1 },
+  tab4: { filtered: [], sortKey: 'date', sortDir: -1, page: 1 },
   perPage: 20,
 };
 let chartInstance = null;
@@ -445,10 +535,7 @@ const fmt = new Intl.NumberFormat('ru-RU');
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const rint = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
 const isoDate = d => d.toISOString().slice(0,10);
-const fmtDate = iso => {
-  const [y,m,d] = iso.split('-');
-  return `${d}.${m}.${y}`;
-};
+const fmtDate = iso => { const [y,m,d] = iso.split('-'); return `${d}.${m}.${y}`; };
 
 function eachDay(from, to) {
   const days = [];
@@ -461,292 +548,476 @@ function eachDay(from, to) {
 /* ─── Generate mock data ─── */
 function generateData() {
   const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
+  const to   = document.getElementById('dateTo').value;
   const days = eachDay(from, to);
   const data = [];
-  let receiptId = 100000;
+  const allWh = WAREHOUSES;
 
-  days.forEach(day => {
-    const deliveriesCount = rint(8, 20);
-    for (let i = 0; i < deliveriesCount; i++) {
-      receiptId++;
-      const r = Math.random();
-      let status;
-      if (r < 0.25) status = 'request';
-      else if (r < 0.70) status = 'packed';
-      else status = 'not-packed';
+  days.forEach(date => {
+    allWh.forEach(warehouse => {
+      BLOCKS.forEach(block => {
+        const count = rint(2, 6);
+        for (let i = 0; i < count; i++) {
+          const totalReceived       = rint(50, 500);
+          const packedBySeller      = rint(0, Math.min(200, totalReceived));
+          const packedBySubject     = rint(0, Math.min(150, totalReceived));
+          const packedSellerCorrect = rint(0, Math.min(100, packedBySeller));
+          const packedSellerIncorrect = rint(0, Math.min(30, packedBySeller - packedSellerCorrect));
+          const checkedByRegulation = rint(0, Math.min(50, totalReceived));
+          const hasPhoto = Math.random() < 0.3;
 
-      data.push({
-        date: day,
-        delivery: receiptId.toString(),
-        receipt: receiptId.toString(),
-        supplier: pick(SUPPLIERS),
-        employee: pick(EMPLOYEES),
-        qty: rint(1, 200),
-        status,
-        photo: status === 'not-packed' ? pick(PHOTOS) : null,
-        warehouse: pick([...state.warehouses]),
+          data.push({
+            date,
+            warehouse,
+            block,
+            deliveryId: 'ПСТ-' + String(rint(100000, 999999)),
+            supplier: pick(SUPPLIERS),
+            subject: pick(SUBJECTS),
+            employeeId: String(rint(100000, 999999)),
+            table: 'Стол ' + rint(1, 20),
+            type: pick(['PLT','TRBX']),
+            totalReceived,
+            packedBySeller,
+            packedBySubject,
+            packedSellerCorrect,
+            packedSellerIncorrect,
+            checkedByRegulation,
+            hasPhoto,
+            photoUrl: hasPhoto ? pick(PHOTOS) : null,
+          });
+        }
       });
-    }
+    });
   });
   return data;
 }
 
-/* ─── Init warehouses ─── */
+/* ─── Filter data by warehouse + block ─── */
+function filteredData() {
+  return state.data.filter(r =>
+    state.warehouses.has(r.warehouse) && state.blocks.has(r.block)
+  );
+}
+
+/* ─── Qty value display ─── */
+function qtyDisplay(value, base) {
+  if (state.qtyMode === 'pct') {
+    if (!base || base === 0) return '0%';
+    return (value / base * 100).toFixed(1) + '%';
+  }
+  return fmt.format(value) + ' шт.';
+}
+function kpiDisplay(value, base) {
+  if (state.qtyMode === 'pct') {
+    if (!base || base === 0) return '0%';
+    return (value / base * 100).toFixed(1) + '%';
+  }
+  return fmt.format(value);
+}
+
+/* ─── Init warehouses dropdown ─── */
 function initWarehouses() {
   const list = document.getElementById('whList');
   list.innerHTML = WAREHOUSES.map(w =>
-    `<label class="wh-item"><input type="checkbox" checked value="${w}"> ${w}</label>`
+    `<label class="ms-item"><input type="checkbox" checked value="${w}"> ${w}</label>`
   ).join('');
 }
 
-function whSelectAll() {
-  document.querySelectorAll('#whList input').forEach(cb => cb.checked = true);
+/* ─── Init blocks dropdown ─── */
+function initBlocks() {
+  const list = document.getElementById('blockList');
+  list.innerHTML = BLOCKS.map(b =>
+    `<label class="ms-item"><input type="checkbox" checked value="${b}"> ${b}</label>`
+  ).join('');
 }
+
+/* ─── Generic ms-select-all ─── */
+function msSelectAll(listId) {
+  document.querySelectorAll('#'+listId+' input').forEach(cb => cb.checked = true);
+}
+
+/* ─── Warehouse apply ─── */
 function whApply() {
   const checked = [...document.querySelectorAll('#whList input:checked')].map(cb => cb.value);
   state.warehouses = new Set(checked);
-  const toggle = document.getElementById('whToggle');
-  toggle.textContent = checked.length === WAREHOUSES.length
-    ? 'Выбраны все'
-    : `Выбрано: ${checked.length}`;
+  document.getElementById('whToggle').textContent =
+    checked.length === WAREHOUSES.length ? 'Выбраны все' : `Выбрано: ${checked.length}`;
   document.getElementById('whDropdown').classList.remove('open');
-  loadData();
+  refreshAll();
 }
 
+/* ─── Block apply ─── */
+function blockApply() {
+  const checked = [...document.querySelectorAll('#blockList input:checked')].map(cb => cb.value);
+  state.blocks = new Set(checked);
+  document.getElementById('blockToggle').textContent =
+    checked.length === BLOCKS.length ? 'Выбраны все' : `Выбрано: ${checked.length}`;
+  document.getElementById('blockDropdown').classList.remove('open');
+  refreshAll();
+}
+
+/* ─── Toggle dropdowns ─── */
 document.getElementById('whToggle').addEventListener('click', () => {
   document.getElementById('whDropdown').classList.toggle('open');
+  document.getElementById('blockDropdown').classList.remove('open');
+});
+document.getElementById('blockToggle').addEventListener('click', () => {
+  document.getElementById('blockDropdown').classList.toggle('open');
+  document.getElementById('whDropdown').classList.remove('open');
 });
 document.getElementById('whSearch').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
-  document.querySelectorAll('#whList .wh-item').forEach(item => {
+  document.querySelectorAll('#whList .ms-item').forEach(item => {
     item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 });
 document.addEventListener('click', e => {
-  const sel = document.querySelector('.wh-selector');
-  if (!sel.contains(e.target)) document.getElementById('whDropdown').classList.remove('open');
+  if (!document.getElementById('whSelector').contains(e.target))
+    document.getElementById('whDropdown').classList.remove('open');
+  if (!document.getElementById('blockSelector').contains(e.target))
+    document.getElementById('blockDropdown').classList.remove('open');
 });
+
+/* ─── Qty mode ─── */
+function setQtyMode(mode) {
+  state.qtyMode = mode;
+  document.getElementById('btnPcs').classList.toggle('active', mode === 'pcs');
+  document.getElementById('btnPct').classList.toggle('active', mode === 'pct');
+  updateKPIs();
+  updateChart();
+  renderTab2();
+  renderTab3();
+  renderTab4();
+}
 
 /* ─── Load data ─── */
 function loadData() {
   state.data = generateData();
-  state.page = 1;
+  state.tab2.page = 1;
+  state.tab3.page = 1;
+  state.tab4.page = 1;
+  refreshAll();
+}
+
+function refreshAll() {
   updateKPIs();
   updateChart();
-  applyDetailFilters();
-  buildWarehouseSummary();
+  applyTab2Filters();
+  applyTab3Filters();
+  applyTab4Filters();
 }
 
 /* ─── KPIs ─── */
 function updateKPIs() {
-  const d = state.data.filter(r => state.warehouses.has(r.warehouse));
-  const requests = d.filter(r => r.status === 'request').reduce((s,r) => s+r.qty, 0);
-  const packed = d.filter(r => r.status === 'packed').reduce((s,r) => s+r.qty, 0);
-  const notPacked = d.filter(r => r.status === 'not-packed').reduce((s,r) => s+r.qty, 0);
-  document.getElementById('kpiRequests').textContent = fmt.format(requests);
-  document.getElementById('kpiPacked').textContent = fmt.format(packed);
-  document.getElementById('kpiNotPacked').textContent = fmt.format(notPacked);
+  const d = filteredData();
+  const total  = d.reduce((s,r) => s + r.totalReceived, 0);
+  const packed = d.reduce((s,r) => s + r.packedBySeller + r.packedBySubject + r.packedSellerIncorrect, 0);
+  const correct = d.reduce((s,r) => s + r.packedSellerCorrect, 0);
+  const correctPct = total > 0 ? (correct / total * 100).toFixed(1) : 0;
+
+  document.getElementById('kpiTotal').textContent = kpiDisplay(total, null);
+  document.getElementById('kpiPacked').textContent = kpiDisplay(packed, null);
+  document.getElementById('kpiCorrectPct').textContent = correctPct + '%';
 }
 
 /* ─── Chart ─── */
 function updateChart() {
-  const d = state.data.filter(r => state.warehouses.has(r.warehouse));
+  const d = filteredData();
   const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
+  const to   = document.getElementById('dateTo').value;
   const days = eachDay(from, to);
 
   const agg = {};
-  days.forEach(day => agg[day] = {request:0, packed:0, 'not-packed':0});
-  d.forEach(r => { if (agg[r.date]) agg[r.date][r.status] += r.qty; });
+  days.forEach(day => agg[day] = {
+    totalReceived:0, packedBySeller:0, packedBySubject:0,
+    packedSellerCorrect:0, packedSellerIncorrect:0, checkedByRegulation:0
+  });
+  d.forEach(r => {
+    if (!agg[r.date]) return;
+    agg[r.date].totalReceived        += r.totalReceived;
+    agg[r.date].packedBySeller       += r.packedBySeller;
+    agg[r.date].packedBySubject      += r.packedBySubject;
+    agg[r.date].packedSellerCorrect  += r.packedSellerCorrect;
+    agg[r.date].packedSellerIncorrect+= r.packedSellerIncorrect;
+    agg[r.date].checkedByRegulation  += r.checkedByRegulation;
+  });
 
   const labels = days.map(fmtDate);
-  const dsRequests = days.map(day => agg[day].request);
-  const dsPacked = days.map(day => agg[day].packed);
-  const dsNotPacked = days.map(day => agg[day]['not-packed']);
+  const isPct = state.qtyMode === 'pct';
+
+  const val = (day, key) => {
+    const base = agg[day].totalReceived;
+    const v = agg[day][key];
+    return isPct ? (base > 0 ? v / base * 100 : 0) : v;
+  };
+
+  const ds1 = days.map(day => isPct ? 100 : agg[day].totalReceived);
+  const ds2 = days.map(day => val(day,'packedBySeller') + val(day,'packedBySubject') + val(day,'packedSellerIncorrect'));
+  const ds3 = days.map(day => val(day,'packedBySeller'));
+  const ds4 = days.map(day => val(day,'packedBySubject'));
+  const ds5 = days.map(day => val(day,'checkedByRegulation'));
+  const ds6 = days.map(day => val(day,'packedSellerCorrect'));
+  const ds7 = days.map(day => val(day,'packedSellerIncorrect'));
+
+  const mkDs = (label, data, color) => ({
+    label, data,
+    borderColor: color,
+    backgroundColor: color + '1a',
+    borderWidth: 2.5,
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    pointBackgroundColor: color,
+    tension: 0.3,
+    fill: false,
+  });
 
   if (chartInstance) chartInstance.destroy();
-
   const ctx = document.getElementById('mainChart').getContext('2d');
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        {
-          label: 'Запросы на проверку',
-          data: dsRequests,
-          borderColor: '#6A00FF',
-          backgroundColor: 'rgba(106,0,255,0.1)',
-          borderWidth: 2.5,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#6A00FF',
-          tension: 0.3,
-          fill: false,
-        },
-        {
-          label: 'Упаковано',
-          data: dsPacked,
-          borderColor: '#16a34a',
-          backgroundColor: 'rgba(22,163,74,0.1)',
-          borderWidth: 2.5,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#16a34a',
-          tension: 0.3,
-          fill: false,
-        },
-        {
-          label: 'Не упаковано',
-          data: dsNotPacked,
-          borderColor: '#dc2626',
-          backgroundColor: 'rgba(220,38,38,0.1)',
-          borderWidth: 2.5,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#dc2626',
-          tension: 0.3,
-          fill: false,
-        },
+        mkDs('Принято всего',                    ds1, '#6A00FF'),
+        mkDs('Упаковано всего',                  ds2, '#2563eb'),
+        mkDs('Упаковано по продавцу',            ds3, '#10b981'),
+        mkDs('Упаковано по предмету',            ds4, '#f59e0b'),
+        mkDs('Проверка упаковки по предмету',    ds5, '#06b6d4'),
+        mkDs('Упаковано продавцом верно',        ds6, '#34d399'),
+        mkDs('Упаковано продавцом неверно',      ds7, '#ef4444'),
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      interaction: { mode:'index', intersect:false },
       plugins: {
         legend: {
-          position: 'top',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 13 } },
-          onClick: (e, legendItem, legend) => {
-            const index = legendItem.datasetIndex;
+          position:'top',
+          labels:{ usePointStyle:true, pointStyle:'circle', padding:16, font:{size:12} },
+          onClick:(e, legendItem, legend) => {
             const ci = legend.chart;
-            const meta = ci.getDatasetMeta(index);
-            meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+            const meta = ci.getDatasetMeta(legendItem.datasetIndex);
+            meta.hidden = meta.hidden === null ? !ci.data.datasets[legendItem.datasetIndex].hidden : null;
             ci.update();
           }
         },
         tooltip: {
-          backgroundColor: '#1b1b1f',
-          padding: 12,
-          titleFont: { size: 13 },
-          bodyFont: { size: 12 },
-          cornerRadius: 10,
+          backgroundColor:'#1b1b1f', padding:12,
+          titleFont:{size:13}, bodyFont:{size:12}, cornerRadius:10,
           callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${fmt.format(ctx.raw)} шт.`
+            label: ctx => {
+              const v = ctx.raw;
+              return isPct
+                ? `${ctx.dataset.label}: ${v.toFixed(1)}%`
+                : `${ctx.dataset.label}: ${fmt.format(Math.round(v))} шт.`;
+            }
           }
         }
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11 }, maxRotation: 45 }
-        },
+        x: { grid:{display:false}, ticks:{font:{size:11},maxRotation:45} },
         y: {
-          beginAtZero: true,
-          grid: { color: '#f0f0f0' },
-          ticks: { font: { size: 11 }, callback: v => fmt.format(v) }
+          beginAtZero:true,
+          grid:{ color:'#f0f0f0' },
+          ticks:{
+            font:{size:11},
+            callback: v => isPct ? v.toFixed(0)+'%' : fmt.format(v)
+          }
         }
       }
     }
   });
 }
 
-/* ─── Detail table ─── */
-const statusLabel = { request: 'Запрос на проверку', packed: 'Упаковано', 'not-packed': 'Не упаковано' };
-const statusClass = { request: 'request', packed: 'packed', 'not-packed': 'not-packed' };
-
-function applyDetailFilters() {
-  const statusF = document.getElementById('filterStatus').value;
-  const textF = document.getElementById('filterText').value.toLowerCase();
-  let f = state.data.filter(r => state.warehouses.has(r.warehouse));
-  if (statusF) f = f.filter(r => r.status === statusF);
-  if (textF) f = f.filter(r =>
-    r.delivery.toLowerCase().includes(textF) ||
-    r.employee.toLowerCase().includes(textF) ||
-    r.supplier.toLowerCase().includes(textF)
+/* ─── Tab 2: Упаковка по продавцу ─── */
+function applyTab2Filters() {
+  const q = document.getElementById('filterSellerText').value.toLowerCase();
+  let f = filteredData();
+  if (q) f = f.filter(r =>
+    r.deliveryId.toLowerCase().includes(q) ||
+    r.supplier.toLowerCase().includes(q)
   );
-  state.filtered = f;
-  state.page = 1;
-  sortFiltered();
-  renderDetailTable();
+  state.tab2.filtered = f;
+  state.tab2.page = 1;
+  sortTabData(state.tab2);
+  renderTab2();
 }
-
-function sortTable(key) {
-  if (state.sortKey === key) state.sortDir *= -1;
-  else { state.sortKey = key; state.sortDir = 1; }
-  sortFiltered();
-  renderDetailTable();
+function sortTab2(key) {
+  const t = state.tab2;
+  if (t.sortKey === key) t.sortDir *= -1;
+  else { t.sortKey = key; t.sortDir = 1; }
+  sortTabData(t);
+  renderTab2();
 }
+function renderTab2() {
+  const t = state.tab2;
+  const d = filteredData();
+  const totalAll = d.reduce((s,r)=>s+r.totalReceived,0);
+  const page = t.filtered.slice((t.page-1)*state.perPage, t.page*state.perPage);
+  const tbody = document.getElementById('sellerBody');
+  tbody.innerHTML = page.map(r => {
+    const packed = r.packedBySeller;
+    const isPacked = packed > 0;
+    const badge = isPacked
+      ? '<span class="status-badge packed">Упаковано</span>'
+      : '<span class="status-badge not-packed">Не упаковано</span>';
+    return `<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><strong>${r.deliveryId}</strong></td>
+      <td>${r.supplier}</td>
+      <td>${r.employeeId}</td>
+      <td>${r.table}</td>
+      <td>${r.type}</td>
+      <td class="right">${qtyDisplay(r.totalReceived, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(packed, r.totalReceived)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+  renderPagination('sellerPagination', t.filtered.length, t.page, p => { t.page=p; renderTab2(); });
+}
+document.getElementById('filterSellerText').addEventListener('input', applyTab2Filters);
 
-function sortFiltered() {
-  const k = state.sortKey;
-  const d = state.sortDir;
-  state.filtered.sort((a,b) => {
+/* ─── Tab 3: Упаковка по предмету ─── */
+function applyTab3Filters() {
+  const q = document.getElementById('filterSubjectText').value.toLowerCase();
+  let f = filteredData();
+  if (q) f = f.filter(r =>
+    r.deliveryId.toLowerCase().includes(q) ||
+    r.subject.toLowerCase().includes(q)
+  );
+  state.tab3.filtered = f;
+  state.tab3.page = 1;
+  sortTabData(state.tab3);
+  renderTab3();
+}
+function sortTab3(key) {
+  const t = state.tab3;
+  if (t.sortKey === key) t.sortDir *= -1;
+  else { t.sortKey = key; t.sortDir = 1; }
+  sortTabData(t);
+  renderTab3();
+}
+function renderTab3() {
+  const t = state.tab3;
+  const page = t.filtered.slice((t.page-1)*state.perPage, t.page*state.perPage);
+  const tbody = document.getElementById('subjectBody');
+  tbody.innerHTML = page.map(r => {
+    const packed = r.packedBySubject;
+    const isPacked = packed > 0;
+    const badge = isPacked
+      ? '<span class="status-badge packed">Упаковано</span>'
+      : '<span class="status-badge not-packed">Не упаковано</span>';
+    return `<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><strong>${r.deliveryId}</strong></td>
+      <td>${r.subject}</td>
+      <td>${r.employeeId}</td>
+      <td>${r.table}</td>
+      <td>${r.type}</td>
+      <td class="right">${qtyDisplay(r.totalReceived, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(packed, r.totalReceived)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+  renderPagination('subjectPagination', t.filtered.length, t.page, p => { t.page=p; renderTab3(); });
+}
+document.getElementById('filterSubjectText').addEventListener('input', applyTab3Filters);
+
+/* ─── Tab 4: Проверка по регламенту ─── */
+function applyTab4Filters() {
+  const q = document.getElementById('filterRegText').value.toLowerCase();
+  let f = filteredData();
+  if (q) f = f.filter(r =>
+    r.deliveryId.toLowerCase().includes(q) ||
+    r.employeeId.toLowerCase().includes(q)
+  );
+  state.tab4.filtered = f;
+  state.tab4.page = 1;
+  sortTabData(state.tab4);
+  renderTab4();
+}
+function sortTab4(key) {
+  const t = state.tab4;
+  if (t.sortKey === key) t.sortDir *= -1;
+  else { t.sortKey = key; t.sortDir = 1; }
+  sortTabData(t);
+  renderTab4();
+}
+function renderTab4() {
+  const t = state.tab4;
+  const page = t.filtered.slice((t.page-1)*state.perPage, t.page*state.perPage);
+  const tbody = document.getElementById('regulationBody');
+  tbody.innerHTML = page.map(r => {
+    const hasErr = r.packedSellerIncorrect > 0;
+    const rowClass = hasErr ? ' class="row-error"' : '';
+    const incorrectCell = r.packedSellerIncorrect > 0
+      ? `<td class="right">${r.hasPhoto
+          ? `<span class="photo-cell-link" onclick="openPhoto('${r.photoUrl}')">${qtyDisplay(r.packedSellerIncorrect, r.totalReceived)}</span>`
+          : qtyDisplay(r.packedSellerIncorrect, r.totalReceived)
+        }</td>`
+      : `<td class="right">${qtyDisplay(r.packedSellerIncorrect, r.totalReceived)}</td>`;
+    const photoCell = r.hasPhoto
+      ? `<img class="photo-thumb" src="${r.photoUrl}" onclick="openPhoto('${r.photoUrl}')" alt="Фото">`
+      : '<span class="no-photo">—</span>';
+    return `<tr${rowClass}>
+      <td>${fmtDate(r.date)}</td>
+      <td><strong>${r.deliveryId}</strong></td>
+      <td>${r.employeeId}</td>
+      <td>${r.table}</td>
+      <td>${r.type}</td>
+      <td class="right">${qtyDisplay(r.totalReceived, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.checkedByRegulation, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.packedSellerCorrect, r.totalReceived)}</td>
+      ${incorrectCell}
+      <td>${photoCell}</td>
+    </tr>`;
+  }).join('');
+  renderPagination('regulationPagination', t.filtered.length, t.page, p => { t.page=p; renderTab4(); });
+}
+document.getElementById('filterRegText').addEventListener('input', applyTab4Filters);
+
+/* ─── Generic sort ─── */
+function sortTabData(t) {
+  const k = t.sortKey;
+  const d = t.sortDir;
+  t.filtered.sort((a,b) => {
     let va = a[k], vb = b[k];
-    if (k === 'qty') return (va - vb) * d;
+    if (typeof va === 'number') return (va - vb) * d;
     if (typeof va === 'string') return va.localeCompare(vb,'ru') * d;
     return 0;
   });
 }
 
-function renderDetailTable() {
-  const start = (state.page - 1) * state.perPage;
-  const page = state.filtered.slice(start, start + state.perPage);
-  const tbody = document.getElementById('detailBody');
-
-  tbody.innerHTML = page.map(r => `
-    <tr>
-      <td>${fmtDate(r.date)}</td>
-      <td><strong>${r.delivery}</strong><br><span style="font-size:.78rem;color:var(--muted)">${r.supplier}</span></td>
-      <td>${r.employee}</td>
-      <td>${fmt.format(r.qty)} шт.</td>
-      <td><span class="status-badge ${statusClass[r.status]}">${statusLabel[r.status]}</span></td>
-      <td>${r.photo
-        ? `<img class="photo-thumb" src="${r.photo}" onclick="openPhoto('${r.photo}')" alt="Фото">`
-        : '<span class="no-photo">—</span>'
-      }</td>
-    </tr>
-  `).join('');
-
-  renderPagination('detailPagination', state.filtered.length, state.page, p => {
-    state.page = p;
-    renderDetailTable();
-  });
-}
-
+/* ─── Pagination ─── */
 function renderPagination(containerId, total, current, onPage) {
   const totalPages = Math.ceil(total / state.perPage);
   const el = document.getElementById(containerId);
   if (totalPages <= 1) { el.innerHTML = ''; return; }
 
-  let html = `<button ${current===1?'disabled':''} onclick="arguments[0].stopPropagation()">‹</button>`;
+  let html = `<button ${current===1?'disabled':''}>‹</button>`;
   const range = [];
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= current-2 && i <= current+2)) range.push(i);
-    else if (range[range.length-1] !== '...') range.push('...');
+  for (let i=1; i<=totalPages; i++) {
+    if (i===1||i===totalPages||(i>=current-2&&i<=current+2)) range.push(i);
+    else if (range[range.length-1]!=='...') range.push('...');
   }
   range.forEach(p => {
-    if (p === '...') html += `<span class="page-info">…</span>`;
-    else html += `<button class="${p===current?'active':''}">${p}</button>`;
+    if (p==='...') html+=`<span class="page-info">…</span>`;
+    else html+=`<button class="${p===current?'active':''}">${p}</button>`;
   });
-  html += `<button ${current===totalPages?'disabled':''}>›</button>`;
-  html += `<span class="page-info">${fmt.format(total)} записей</span>`;
+  html+=`<button ${current===totalPages?'disabled':''}>›</button>`;
+  html+=`<span class="page-info">${fmt.format(total)} записей</span>`;
   el.innerHTML = html;
 
   el.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       const txt = btn.textContent;
-      if (txt === '‹') onPage(current - 1);
-      else if (txt === '›') onPage(current + 1);
-      else { const n = parseInt(txt); if (!isNaN(n)) onPage(n); }
+      if (txt==='‹') onPage(current-1);
+      else if (txt==='›') onPage(current+1);
+      else { const n=parseInt(txt); if(!isNaN(n)) onPage(n); }
     });
   });
 }
-
-document.getElementById('filterStatus').addEventListener('change', applyDetailFilters);
-document.getElementById('filterText').addEventListener('input', applyDetailFilters);
 
 /* ─── Tab switching ─── */
 function switchTab(tab, btn) {
@@ -756,41 +1027,46 @@ function switchTab(tab, btn) {
   document.getElementById('tab-'+tab).classList.add('active');
 }
 
-/* ─── Search tab ─── */
+/* ─── Tab 5: Search ─── */
 function doSearch() {
-  const q = document.getElementById('searchInput').value.trim();
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
   if (!q) return;
 
-  const results = state.data.filter(r =>
-    r.receipt.includes(q) || r.delivery.toLowerCase().includes(q.toLowerCase())
-  );
+  const results = state.data.filter(r => r.deliveryId.toLowerCase().includes(q));
 
   if (results.length === 0) {
     document.getElementById('searchResultTitle').textContent = `По запросу "${q}" ничего не найдено`;
     document.getElementById('searchBody').innerHTML = '';
     return;
   }
-
   document.getElementById('searchResultTitle').textContent = `Результаты: ${results.length} записей по "${q}"`;
 
+  const isPct = state.qtyMode === 'pct';
   const tbody = document.getElementById('searchBody');
-  tbody.innerHTML = results.map(r => `
-    <tr>
+  tbody.innerHTML = results.map(r => {
+    const photoCell = r.hasPhoto
+      ? `<img class="photo-thumb" src="${r.photoUrl}" onclick="openPhoto('${r.photoUrl}')" alt="Фото">`
+      : '<span class="no-photo">—</span>';
+    return `<tr${r.packedSellerIncorrect>0?' class="row-error"':''}>
       <td>${fmtDate(r.date)}</td>
-      <td><strong>${r.delivery}</strong><br><span style="font-size:.78rem;color:var(--muted)">${r.supplier}</span></td>
-      <td>${r.employee}</td>
-      <td>${fmt.format(r.qty)} шт.</td>
-      <td><span class="status-badge ${statusClass[r.status]}">${statusLabel[r.status]}</span></td>
-      <td>${r.photo
-        ? `<img class="photo-thumb" src="${r.photo}" onclick="openPhoto('${r.photo}')" alt="Фото">`
-        : '<span class="no-photo">—</span>'
-      }</td>
-    </tr>
-  `).join('');
+      <td><strong>${r.deliveryId}</strong></td>
+      <td>${r.supplier}</td>
+      <td>${r.subject}</td>
+      <td>${r.employeeId}</td>
+      <td>${r.table}</td>
+      <td>${r.type}</td>
+      <td class="right">${qtyDisplay(r.totalReceived, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.packedBySeller, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.packedBySubject, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.checkedByRegulation, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.packedSellerCorrect, r.totalReceived)}</td>
+      <td class="right">${qtyDisplay(r.packedSellerIncorrect, r.totalReceived)}</td>
+      <td>${photoCell}</td>
+    </tr>`;
+  }).join('');
 }
-
 document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSearch();
+  if (e.key==='Enter') doSearch();
 });
 
 /* ─── Photo modal ─── */
@@ -801,92 +1077,11 @@ function openPhoto(src) {
 function closePhoto() {
   document.getElementById('photoModal').classList.remove('open');
 }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closePhoto();
-});
-
-/* ─── Warehouse summary table ─── */
-const WH_SUMMARY_NAMES = [
-  'WH Turkey','tbilisi 2','Абакан Складская','Актобе','Алексин',
-  'Алматы Атакент','Архангельск Ленина','Астана','Барнаул','Белая Дача',
-  'Бишкек','Брянск','Великий Новгород','Владивосток','Волгоград',
-  'Вологда','Воронеж','Екатеринбург','Иваново','Ижевск',
-  'Иркутск','Казань','Калининград','Калуга','Кемерово',
-  'Киров','Коледино','Краснодар','Красноярск','Курск'
-];
-
-function fmtCompact(n) {
-  if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 2).replace(/\.?0+$/, '') + 'k';
-  return n.toString();
-}
-
-function buildWarehouseSummary() {
-  const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
-  document.getElementById('whSummaryPeriod').textContent = `Дата: ${from} — ${to}`;
-
-  const rows = WH_SUMMARY_NAMES.map(name => {
-    const seed = Math.abs([...name].reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0));
-    const r = (min, max) => Math.floor((seed * 9301 + 49297) % 233280 / 233280 * (max - min + 1)) + min;
-    const totalReceived = r(100, 1500000);
-    const packedRate = (seed % 60) / 100;
-    const packed = Math.round(totalReceived * packedRate);
-    const checkRate = (seed % 30) / 100;
-    const checkQty = Math.round(totalReceived * checkRate);
-    const wrongRate = (seed % 10) / 100;
-    const wrongQty = Math.round(totalReceived * wrongRate);
-
-    return {
-      name,
-      totalReceived,
-      packed,
-      packedPct: totalReceived > 0 ? (packed / totalReceived * 100) : 0,
-      checkQty,
-      checkPct: totalReceived > 0 ? (checkQty / totalReceived * 100) : 0,
-      wrongQty,
-      wrongPct: totalReceived > 0 ? (wrongQty / totalReceived * 100) : 0,
-    };
-  });
-
-  const totals = rows.reduce((t, r) => ({
-    totalReceived: t.totalReceived + r.totalReceived,
-    packed: t.packed + r.packed,
-    checkQty: t.checkQty + r.checkQty,
-    wrongQty: t.wrongQty + r.wrongQty,
-  }), { totalReceived: 0, packed: 0, checkQty: 0, wrongQty: 0 });
-
-  const tbody = document.getElementById('whSummaryBody');
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.name}</td>
-      <td class="right">${fmtCompact(r.totalReceived)}</td>
-      <td class="right">${r.packed ? fmtCompact(r.packed) : ''}</td>
-      <td class="right">${r.packedPct ? r.packedPct.toFixed(2) : ''}</td>
-      <td class="right">${r.checkQty ? fmtCompact(r.checkQty) : ''}</td>
-      <td class="right">${r.checkPct ? r.checkPct.toFixed(2) : ''}</td>
-      <td class="right">${r.wrongQty ? fmtCompact(r.wrongQty) : ''}</td>
-      <td class="right">${r.wrongPct ? r.wrongPct.toFixed(2) : ''}</td>
-    </tr>
-  `).join('');
-
-  const tfoot = document.getElementById('whSummaryFoot');
-  tfoot.innerHTML = `
-    <tr style="font-weight:700;border-top:2px solid var(--border);background:#fafafa">
-      <td><strong>Total (Sum)</strong></td>
-      <td class="right">${fmtCompact(totals.totalReceived)}</td>
-      <td class="right">${fmtCompact(totals.packed)}</td>
-      <td class="right">${(totals.packed / totals.totalReceived * 100).toFixed(2)}</td>
-      <td class="right">${fmtCompact(totals.checkQty)}</td>
-      <td class="right">${(totals.checkQty / totals.totalReceived * 100).toFixed(2)}</td>
-      <td class="right">${fmtCompact(totals.wrongQty)}</td>
-      <td class="right">${(totals.wrongQty / totals.totalReceived * 100).toFixed(2)}</td>
-    </tr>
-  `;
-}
+document.addEventListener('keydown', e => { if (e.key==='Escape') closePhoto(); });
 
 /* ─── Init ─── */
 initWarehouses();
+initBlocks();
 loadData();
 </script>
 </body>
